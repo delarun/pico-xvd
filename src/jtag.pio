@@ -1,0 +1,34 @@
+; JTAG-сдвигатель для XVC.
+;
+; Пины:  OUT base   = TDI, base+1 = TMS  (out pins, 2)
+;        side-set   = TCK
+;        IN  base   = TDO
+;
+; TX FIFO: [N-1], затем ceil(N/16) слов; в каждом 16 пар бит (TDI | TMS<<1), младшие первыми
+; RX FIFO: floor(N/32) слов через autopush (порог 32, сдвиг вправо)
+;          + одно финальное слово (push): частичное, биты в старших разрядах,
+;          либо 0, если N кратно 32.
+;
+; Такт: TCK низкий 2 цикла (выставляем TDI/TMS), высокий >= 3 цикла (по фронту читаем TDO).
+; Устройство защёлкивает TDI/TMS и выставляет TDO по спаду — читаем TDO на подъёме.
+
+.program xvc_jtag
+.side_set 1 opt
+
+start:
+    pull block          side 0      ; N-1
+    out x, 32
+next_word:
+    pull block                      ; 16 пар TDI/TMS
+    set y, 15
+bit_loop:
+    out pins, 2         side 0 [1]  ; TCK=0, выставить TDI, TMS
+    in pins, 1          side 1      ; TCK=1, прочитать TDO
+    jmp x-- more
+    jmp done
+more:
+    jmp y-- bit_loop
+    jmp next_word
+done:
+    push block                      ; дослать хвост (или пустое слово)
+    jmp start
