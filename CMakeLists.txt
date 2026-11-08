@@ -38,6 +38,17 @@ target_link_libraries(pico_xvc PRIVATE
     pico_lwip_core4
     pico_lwip_netif
     pico_lwip_arch
+    pico_usb_reset
+)
+
+# Интерфейс сброса для picotool (reboot -f / -u). Скорость 1200 бод обрабатывает uart_bridge.c,
+# поэтому встроенную реакцию SDK на неё отключаем.
+target_compile_definitions(pico_xvc PRIVATE
+    PICO_ENABLE_USB_RESET_VIA_VENDOR_INTERFACE=1
+    PICO_USB_RESET_INCLUDE_DEFAULT_APP_DRIVER_CB=1
+    PICO_ENABLE_USB_RESET_VIA_BAUD_RATE=0
+    PICO_USB_RESET_SUPPORT_MS_OS_20_DESCRIPTOR=0
+    PICO_USB_RESET_BOOTSEL_ACTIVITY_LED=25
 )
 
 # Отладочный вывод — UART0 (GP0 TX / GP1 RX, 115200). USB занят сетевым интерфейсом.

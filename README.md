@@ -50,6 +50,25 @@ cp build/pico_xvc.uf2 /run/media/$USER/RPI-RP2/
 
 Нужен `lib/lwip` в pico-sdk: `git -C ~/pico-sdk submodule update --init lib/lwip`.
 
+### Перезагрузка в BOOTSEL без кнопки
+
+Любой из способов (`flash.sh` пробует их по очереди):
+
+```sh
+picotool reboot -u -f --vid 0xcafe --pid 0x4a59   # интерфейс сброса, как у стандартного stdio_usb
+printf 'bootsel:' | nc 192.168.7.1 2542            # по сети, через XVC-сервер
+stty -F /dev/ttyACM0 1200                          # «касание» COM-порта на 1200 бод
+```
+
+`--vid/--pid` обязательны: без них picotool ищет только устройства Raspberry Pi (2e8a).
+Для доступа без root — правило udev:
+
+```
+# /etc/udev/rules.d/99-pico-xvc.rules
+SUBSYSTEM=="usb", ATTRS{idVendor}=="cafe", ATTRS{idProduct}=="4a59", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="cafe", ATTRS{idProduct}=="4a59", MODE="0666"
+```
+
 Повторная прошивка без кнопки BOOTSEL: `./flash.sh` — собирает проект, перезагружает Pico в BOOTSEL
 (XVC-команда `bootsel:` или 1200 бод на `/dev/ttyACM0`) и прошивает через `picotool`.
 
