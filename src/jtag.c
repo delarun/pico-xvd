@@ -8,7 +8,7 @@
 #include "jtag.pio.h"
 
 // Циклов PIO на один бит (2 низких + 3 высоких; на границе слова чуть больше)
-#define CYCLES_PER_BIT 5
+#define CYCLES_PER_BIT 7
 
 static PIO      jtag_pio = pio0;
 static uint     jtag_sm;
